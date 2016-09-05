@@ -20,7 +20,7 @@ int main()
 
 	do// Main Loop. Runs the MoneyToEnglish functions until user wishes to stop
 	{
-		do//gets input until the input satisfies all conditions
+		do//gets input until the input satisfies conditions
 		{
 			cout << "----------------Welcome to MakeMoney----------------\n"
 				<< "Please enter an amount between 9999.99 and 0.00\n"
@@ -39,7 +39,7 @@ int main()
 		cout << "Would you like to try another?\n"
 			<< "   Enter y/n\n";
 		cin >> choice;//user can choose to enter another number or not
-	} while (choice != 'n' || choice != 'N');
+	} while (choice != 'n' && choice != 'N');
 
 	return 0;//clean exit
 }
@@ -246,7 +246,8 @@ void displayEnglishOnes(int tens, int ones)
 		switch (ones)//displays the ones digit
 		{
 			case (0) :
-				cout << "Zero ";
+				if (tens == 0)
+					cout << "Zero ";
 				break;
 			case (1) :
 				cout << "One ";
