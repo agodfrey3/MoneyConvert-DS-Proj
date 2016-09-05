@@ -1,7 +1,7 @@
 //Andrew Godfrey
 //Money Value to English Expression
-//Last Updated: 9/4/2016
-//Known Bug:
+//Last Updated: 9/5/2016
+//Known Bug: If the cent input is one digit, it will read it as .01 instead of .10 ex. 1.5 would be read as 1.05
 #include <iostream>
 #include <string>
 using namespace std;
@@ -11,7 +11,8 @@ void inputStatus(char exitCode);//displays a message commenting on whether or no
 void extractValues(int dollars, int cents, int &thousands, int &hundreds, int &tens, int &ones, int &tenths, int &hundreths);//splits the input into each digit
 void displayEnglishToH(int ToH, string type);//displays, in english, the hundreds or thousands place
 void displayEnglishTens(int hundreds, int tens, int ones);//displays, in english, the tens place
-void displayEnglishOnes(int tens, int ones);//displays, in english, the ones place
+void displayEnglishOnes(int hundreds, int thousands, int tens, int ones, int cents);//displays, in english, the ones place
+void displayEnglishCents(int tenths, int hundreths);// displays, in english, the number of cents
 
 int main()
 {
@@ -34,12 +35,15 @@ int main()
 		displayEnglishToH(thousands, "thousand");//displays the thousands
 		displayEnglishToH(hundreds, "hundred");  //displays the hundreds
 		displayEnglishTens(hundreds, tens, ones);          //displays the tens
-		displayEnglishOnes(tens, ones);          //displays the ones
+		displayEnglishOnes(hundreds, thousands, tens, ones, cents);          //displays the ones
+		displayEnglishCents(tenths, hundreths);
 
 		cout << "Would you like to try another?\n"
 			<< "   Enter y/n\n";
 		cin >> choice;//user can choose to enter another number or not
 	} while (choice != 'n' && choice != 'N');
+
+	cout << "Thank you for using MoneyConvert\n";
 
 	return 0;//clean exit
 }
@@ -162,8 +166,6 @@ void displayEnglishToH(int ToH, string type)
 }
 void displayEnglishTens(int hundreds, int tens, int ones)
 {
-	if ( hundreds > 0)
-		cout << "and ";
 	if (tens > 1 && tens < 10)
 	{
 		switch (tens)//handles tens digit
@@ -239,14 +241,14 @@ void displayEnglishTens(int hundreds, int tens, int ones)
 	}
 }
 
-void displayEnglishOnes(int tens, int ones)
+void displayEnglishOnes(int hundreds, int thousands, int tens, int ones, int cents)
 {
 	if ((tens == 0 || tens > 1) && tens < 10)
 	{
 		switch (ones)//displays the ones digit
 		{
 			case (0) :
-				if (tens == 0)
+				if (tens == 0 && hundreds == 0 && thousands == 0)
 					cout << "Zero ";
 				break;
 			case (1) :
@@ -279,6 +281,161 @@ void displayEnglishOnes(int tens, int ones)
 			default:
 				break;
 		}
-		cout << "Dollars " << endl;
+		cout << "Dollars ";
+		if (cents <= 0)
+			cout << endl;
 	}
+}
+
+void displayEnglishCents(int tenths, int hundreths)
+{
+	if (tenths * 10 + hundreths > 0)
+		cout << "and ";
+	if (tenths > 1)
+	{
+		switch (tenths)
+		{
+		case (2) :
+			cout << "Twenty ";
+			break;
+		case (3) :
+			cout << "Thirty ";
+			break;
+		case (4) :
+			cout << "Forty ";
+			break;
+		case (5) :
+			cout << "Fifty ";
+			break;
+		case (6) :
+			cout << "Sixty ";
+			break;
+		case (7) :
+			cout << "Seventy ";
+			break;
+		case (8) :
+			cout << "Eighty ";
+			break;
+		case(9) :
+			cout << "Ninety ";
+			break;
+		default:
+			cout << "Error in tenths place\n.";
+			break;
+		}
+		switch (hundreths)
+		{
+		case (0) :
+			break;
+		case (1) :
+			cout << "One ";
+			break;
+		case (2) :
+			cout << "Two ";
+			break;
+		case (3) :
+			cout << "Three ";
+			break;
+		case (4) :
+			cout << "Four ";
+			break;
+		case (5) :
+			cout << "Five ";
+			break;
+		case (6) :
+			cout << "Six ";
+			break;
+		case (7) :
+			cout << "Seven ";
+			break;
+		case (8) :
+			cout << "Eight ";
+			break;
+		case(9) :
+			cout << "Nine ";
+			break;
+		default:
+			cout << "Error in tenths place\n.";
+			break;
+		}
+	}
+	else if (tenths == 1)
+	{
+		switch (hundreths)
+		{
+		case(0) :
+			cout << "Ten ";
+			break;
+		case (1) :
+			cout << "Eleven ";
+			break;
+		case (2) :
+			cout << "Twelve ";
+			break;
+		case (3) :
+			cout << "Thirteen ";
+			break;
+		case (4) :
+			cout << "Fourteen ";
+			break;
+		case (5) :
+			cout << "Fifteen ";
+			break;
+		case (6) :
+			cout << "Sixteen ";
+			break;
+		case (7) :
+			cout << "Seventeen ";
+			break;
+		case (8) :
+			cout << "Eighteen ";
+			break;
+		case(9) :
+			cout << "Nineteen ";
+			break;
+		default:
+			cout << "Error in tenths place\n.";
+			break;
+		}
+	}
+	else if (tenths == 0)
+	{
+		switch (hundreths)
+		{
+		case(0) :
+			break;
+		case (1) :
+			cout << "One ";
+			break;
+		case (2) :
+			cout << "Two ";
+			break;
+		case (3) :
+			cout << "Three ";
+			break;
+		case (4) :
+			cout << "Four ";
+			break;
+		case (5) :
+			cout << "Five ";
+			break;
+		case (6) :
+			cout << "Six ";
+			break;
+		case (7) :
+			cout << "Seven ";
+			break;
+		case (8) :
+			cout << "Eight ";
+			break;
+		case(9) :
+			cout << "Nine ";
+			break;
+		default:
+			cout << "Error in tenths place\n.";
+			break;
+		}
+	}
+	if (tenths* 10 + hundreths > 0)
+		cout << "cents\n";
 }
