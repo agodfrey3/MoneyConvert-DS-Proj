@@ -1,43 +1,56 @@
 //Andrew Godfrey
 //Money Value to English Expression
-//Last Updated: 9/5/2016
-//Known Bug: If the cent input is one digit, it will read it as .01 instead of .10 ex. 1.5 would be read as 1.05
+//Last Updated: 9/12/2016
+//Known Bug: If the cent input is one digit, it will read it as .01 instead of .10 ex. 1.5 would be read as 1.05. Worked around by telling user the proper format to enter an amount in.
 #include <iostream>
 #include <string>
 using namespace std;
 
-char getInput(int &dollars, int &cents);//gets and checks input
-void inputStatus(char exitCode);//displays a message commenting on whether or not input was valid
-void extractValues(int dollars, int cents, int &thousands, int &hundreds, int &tens, int &ones, int &tenths, int &hundreths);//splits the input into each digit
-void displayEnglishToH(int ToH, string type);//displays, in english, the hundreds or thousands place
-void displayEnglishTens(int hundreds, int tens, int ones);//displays, in english, the tens place
-void displayEnglishOnes(int hundreds, int thousands, int tens, int ones, int cents);//displays, in english, the ones place
-void displayEnglishCents(int tenths, int hundreths);// displays, in english, the number of cents
+char getInput(int &dollars, int &cents);
+/*
+@param         : gets variables from main to store the user input values correlating to dollar and cent values which will later be converted to english words
+@pre-condition : empty variables for dollar/cent. User is ready to enter their desired dollar amount. 
+@post-condition: the input is either stored into variables (dollar and cent) and the function has returned a value to signify whether these values were stored or not. 
+@return        : char signifying whether the attempt was a success or failure. A return of 'g' means the dollar/cent values are stored and were valid. A return of 'e' means there was an error in the user's input.
+*/
+void inputStatus(char exitCode);
+/*
+@param         : Recieves code from 'getInput' that signifies whether the function was successful or not in obtaining values for dollar/cent
+@pre-condition : getInput has been run and returned a character that signifies whether the dollar/cent values have been stored or not.
+@post-condition: The user is informed as to whether or not their input was valid.
+*/
+void extractValues(int dollars, int cents, int &thousands, int &hundreds, int &tens, int &ones, int &tenths, int &hundreths);
+/*
+@param         : dollars and cents are the input from user signifying the dollar and cent amounts they desire to be translated into english. The remaining vars are empty and will be used to store digits correlating to places in the entered dollar amount. 
+@pre-condition : The user has successfully entered a dollar amount, and variables are ready to hold each of the digits within the dollar amount entered. 
+@post-condition: Each digit from the user input dollar amount has been stored in a variable.
+*/
+string getEnglishDollarAmount(int thousand, int hundred, int ten, int one, int tenth, int hundreth, int cents);
+/*
+@param         : Digit values for thousands, hundreds, tens, ones, tenths, and hundreths. Cents variable to check if the cents value is > 0
+@pre-condition : The digits have been extracted from the user's dollar and cent input
+@post-condition: The proper english names have been concatenated into a string that displays the english phrase for the user's entered dollar amount
+@return        : A string correlating to the english phrase of the user's dollar/cent input
+*/
+
 
 int main()
 {
-	int  dollars, cents, thousands, hundreds, tens, ones, tenths, hundreths;
-	char exitCode, choice;
-
+	int  dollars, cents, thousands, hundreds, tens, ones, tenths, hundreths;// Variables to store each digit in the dollar amount as well as the dollar and cent amounts themselves
+	char exitCode, choice;// Exit code correlates to the success or failure of an input operation; choice is y/n
+	
 	do// Main Loop. Runs the MoneyToEnglish functions until user wishes to stop
 	{
 		do//gets input until the input satisfies conditions
 		{
-			cout << "----------------Welcome to MakeMoney----------------\n"
-				<< "Please enter an amount between 9999.99 and 0.00\n"
-				<< "Enter an amount to convert: $";
 			exitCode = getInput(dollars, cents);//gets input and returns a code connected to an error or successful run
 			inputStatus(exitCode);              // Outputs whether the input was valid or not
 		} while (exitCode != 'g');
 
 		extractValues(dollars, cents, thousands, hundreds, tens, ones, tenths, hundreths);//extracts each digit from initial input
 
-		displayEnglishToH(thousands, "thousand");//displays the thousands
-		displayEnglishToH(hundreds, "hundred");  //displays the hundreds
-		displayEnglishTens(hundreds, tens, ones);          //displays the tens
-		displayEnglishOnes(hundreds, thousands, tens, ones, cents);          //displays the ones
-		displayEnglishCents(tenths, hundreths);
-
+		cout << "Amount is: "
+			<< getEnglishDollarAmount(thousands, hundreds, tens, ones, tenths, hundreths, cents);// Displays the user entered dollar amount in english
 		cout << "Would you like to try another?\n"
 			<< "   Enter y/n\n";
 		cin >> choice;//user can choose to enter another number or not
@@ -50,18 +63,21 @@ int main()
 
 char getInput(int &dollars, int &cents)
 {
-	int dol, cen;
-	char ch;
-	char code = 'g';
+	cout << "----------------Welcome to MakeMoney----------------\n"
+		<< "Please enter an amount between 9999.99 and 0.00\n"
+		<< "Enter an amount to convert: $";
+	int dol, cen;// temp vars to hold dollar and cent input for processing 
+	char ch;// variable to hold the separator, '.'
+	char code = 'g'; // Sets return val to good by default
 	while (true)
 	{
-		cin >> dol;
-		if (cin.fail() || dol > 9999)//get input for dollars and checks validity
+		cin >> dol;//get input for dollars
+		if (cin.fail() || dol > 9999)// Checks to make sure that the input is valid 
 		{
-			code = 'e';
-			cin.clear();
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			break;
+			code = 'e';// sets an error flag
+			cin.clear();// clears the cin failure flag
+			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');// clears the buffer to next line
+			break;// ends loop
 		}
 
 		cin >> ch;
@@ -84,24 +100,24 @@ char getInput(int &dollars, int &cents)
 		break;
 	}
 
-	if (code == 'g')//uses param variables to change the main functions dollar and cents main variables if the input was good
+	if (code == 'g')// Sets the dollar/cent vars to the values of the temp vars since input was valid
 	{
 		dollars = dol;
-		cents   = cen;
+		cents = cen;
 	}
-	return code;
+	return code;// returns 'g' for good or 'e' for error
 }
 
 void inputStatus(char exitCode)
 {
 	switch (exitCode)
 	{
-	case ('e') ://code for error
+	case ('e')://code for error
 		cout << "Your input was invalid, please try again.\n\n";
 		break;
-	case ('g') ://code for good input
+	case ('g')://code for good input
 		cout << "Thank you. Your input was valid.\n"
-		<< "\tProcessing...\n\n";
+			<< "\tProcessing...\n\n";
 		break;
 	default://code if the getInput function malfunctioned
 		cout << "Bug in code. Check over logic\n";
@@ -112,330 +128,47 @@ void inputStatus(char exitCode)
 void extractValues(int dollars, int cents, int &thousands, int &hundreds, int &tens, int &ones, int &tenths, int &hundreths)
 {
 	thousands = dollars / 1000;//returns the largest int that goes into dollars 1000 times + stores it into thousands
-	dollars   = dollars % 1000;//changes the value to the remainder after the thousands operation
-	hundreds  = dollars / 100;
-	dollars   = dollars % 100;
-	tens      = dollars / 10;
-	dollars   = dollars % 10;
-	ones      = dollars;
-	
-	tenths    = cents / 10;
-	cents     = cents % 10;
+	dollars = dollars % 1000;//changes the value to the remainder after the thousands operation
+	hundreds = dollars / 100;
+	dollars = dollars % 100;
+	tens = dollars / 10;
+	dollars = dollars % 10;
+	ones = dollars;
+
+	tenths = cents / 10;
+	cents = cents % 10;
 	hundreths = cents;
 }
 
-void displayEnglishToH(int ToH, string type)
+string getEnglishDollarAmount(int thousand, int hundred, int ten, int one, int tenth, int hundreth, int cents)
 {
-	if (ToH > 0 && ToH < 10)//outputs nothing is the value is 0
-	{
-		switch (ToH)//gets the proper value of the hundreds or thousands place (in english) 
-		{
-			case (1) :
-				cout << "One ";
-				break;
-			case (2) :
-				cout << "Two ";
-				break;
-			case (3) :
-				cout << "Three ";
-				break;
-			case (4) :
-				cout << "Four ";
-				break;
-			case (5) :
-				cout << "Five ";
-				break;
-			case (6) :
-				cout << "Six ";
-				break;
-			case (7) :
-				cout << "Seven ";
-				break;
-			case (8) :
-				cout << "Eight ";
-				break;
-			case (9) :
-				cout << "Nine ";
-				break;
-			default:
-				cout << "Error: Inproper " << type << " digit\n";
-				break;
-		}
-		cout << type << ' ';//adds 'thousand' or 'hundred' and a space so the next value lines up properly on the line
-	}
-}
-void displayEnglishTens(int hundreds, int tens, int ones)
-{
-	if (tens > 1 && tens < 10)
-	{
-		switch (tens)//handles tens digit
-		{
-			case (2) :
-				cout << "Twenty ";
-				break;
-			case (3) :
-				cout << "Thirty ";
-				break;
-			case (4) :
-				cout << "Forty ";
-				break;
-			case (5) :
-				cout << "Fifty ";
-				break;
-			case (6) :
-				cout << "Sixty ";
-				break;
-			case (7) :
-				cout << "Seventy ";
-				break;
-			case (8) :
-				cout << "Eighty ";
-				break;
-			case (9) :
-				cout << "Ninety ";
-				break;
-			default:
-				cout << "Error: Invalid Tens Digit\n";
-				break;
-		}
-	}
-	else if (tens == 1)
-	{
-		switch (ones)//case of last two digits being teens
-		{
-			case (0) :
-				cout << " Ten ";
-				break;
-			case (1) :
-				cout << " Eleven ";
-				break;
-			case (2) :
-				cout << " Twelve ";
-				break;
-			case (3) :
-				cout << " Thirteen ";
-				break;
-			case (4) :
-				cout << " Fourteen ";
-				break;
-			case (5) :
-				cout << " Fifteen ";
-				break;
-			case (6) :
-				cout << " Sixteen ";
-				break;
-			case (7) :
-				cout << " Seventeen ";
-				break;
-			case (8) :
-				cout << " Eighteen ";
-				break;
-			case (9) :
-				cout << " Nineteen ";
-				break;
-			default:
-				cout << "Error: Invalid Tens Digit\n";
-				break;
-		}
-		cout << "Dollars " << endl;
-	}
-}
+	// Lookup tables for dollar/cent values
+	string thousandsTable[10] = { "", "One Thousand ","Two Thousand ","Three Thousand ","Four Thousand ","Five Thousand ","Six Thousand ","Seven Thousand ","Eight Thousand ","Nine Thousand " };
+	string hundredsTable[10] = { "", "One Hundred ", "Two Hundred ", "Three Hundred ", "Four Hundred ", "Five Hundred ", "Six Hundred ", "Seven Hundred ", "Eight Hundred ", "Nine Hundred " };
+	string tensTable[10] = { "", "", "Twenty ", "Thirty ", "Forty ", "Fifty ", "Sixty ", "Seventy ", "Eighty ", "Ninety " };
+	string onesWithOneTenTable[10] = { "Ten ","Eleven ","Twelve ","Thirteen ","Fourteen ","Fifteen ","Sixteen ","Seventeen ","Eighteen ","Nineteen " };
+	string onesTable[10] = { "", "One ","Two ","Three ","Four ","Five ","Six ","Seven ","Eight ","Nine " };
 
-void displayEnglishOnes(int hundreds, int thousands, int tens, int ones, int cents)
-{
-	if ((tens == 0 || tens > 1) && tens < 10)
-	{
-		switch (ones)//displays the ones digit
-		{
-			case (0) :
-				if (tens == 0 && hundreds == 0 && thousands == 0)
-					cout << "Zero ";
-				break;
-			case (1) :
-				cout << "One ";
-				break;
-			case (2) :
-				cout << "Two ";
-				break;
-			case (3) :
-				cout << "Three ";
-				break;
-			case (4) :
-				cout << "Four ";
-				break;
-			case (5) :
-				cout << "Five ";
-				break;
-			case (6) :
-				cout << "Six ";
-				break;
-			case (7) :
-				cout << "Seven ";
-				break;
-			case (8) :
-				cout << "Eight ";
-				break;
-			case (9) :
-				cout << "Nine ";
-				break;
-			default:
-				break;
-		}
-		cout << "Dollars ";
-		if (cents <= 0)
-			cout << endl;
-	}
-}
+	string output = thousandsTable[thousand] + hundredsTable[hundred]; // Adds thousands and hundreds phrases to the return string
 
-void displayEnglishCents(int tenths, int hundreths)
-{
-	if (tenths * 10 + hundreths > 0)
-		cout << "and ";
-	if (tenths > 1)
+	if (ten == 1)
+		output = output + onesWithOneTenTable[one] + "dollars"; // Adds phrase correlating numbers with a one in the tens place
+	else
+		output = output + tensTable[ten] + onesTable[one] + "dollars"; // Adds phrase correlating to numbers with a digit other than one in the tens place
+
+
+	if (cents > 0) // checks to make sure that cents is > 0, else there is no need to state anything
 	{
-		switch (tenths)
-		{
-		case (2) :
-			cout << "Twenty ";
-			break;
-		case (3) :
-			cout << "Thirty ";
-			break;
-		case (4) :
-			cout << "Forty ";
-			break;
-		case (5) :
-			cout << "Fifty ";
-			break;
-		case (6) :
-			cout << "Sixty ";
-			break;
-		case (7) :
-			cout << "Seventy ";
-			break;
-		case (8) :
-			cout << "Eighty ";
-			break;
-		case(9) :
-			cout << "Ninety ";
-			break;
-		default:
-			cout << "Error in tenths place\n.";
-			break;
-		}
-		switch (hundreths)
-		{
-		case (0) :
-			break;
-		case (1) :
-			cout << "One ";
-			break;
-		case (2) :
-			cout << "Two ";
-			break;
-		case (3) :
-			cout << "Three ";
-			break;
-		case (4) :
-			cout << "Four ";
-			break;
-		case (5) :
-			cout << "Five ";
-			break;
-		case (6) :
-			cout << "Six ";
-			break;
-		case (7) :
-			cout << "Seven ";
-			break;
-		case (8) :
-			cout << "Eight ";
-			break;
-		case(9) :
-			cout << "Nine ";
-			break;
-		default:
-			cout << "Error in tenths place\n.";
-			break;
-		}
+		output = output + " and ";
+		if (tenth == 1)
+			output = output + onesWithOneTenTable[hundreth];// adds phrase correlating to cents with a tenth digit of 1
+		else
+			output = output + tensTable[tenth] + onesTable[hundreth];// adds phrase correlating to cents with a tenth digit != 1
+		output = output + "cents.";
 	}
-	else if (tenths == 1)
-	{
-		switch (hundreths)
-		{
-		case(0) :
-			cout << "Ten ";
-			break;
-		case (1) :
-			cout << "Eleven ";
-			break;
-		case (2) :
-			cout << "Twelve ";
-			break;
-		case (3) :
-			cout << "Thirteen ";
-			break;
-		case (4) :
-			cout << "Fourteen ";
-			break;
-		case (5) :
-			cout << "Fifteen ";
-			break;
-		case (6) :
-			cout << "Sixteen ";
-			break;
-		case (7) :
-			cout << "Seventeen ";
-			break;
-		case (8) :
-			cout << "Eighteen ";
-			break;
-		case(9) :
-			cout << "Nineteen ";
-			break;
-		default:
-			cout << "Error in tenths place\n.";
-			break;
-		}
-	}
-	else if (tenths == 0)
-	{
-		switch (hundreths)
-		{
-		case(0) :
-			break;
-		case (1) :
-			cout << "One ";
-			break;
-		case (2) :
-			cout << "Two ";
-			break;
-		case (3) :
-			cout << "Three ";
-			break;
-		case (4) :
-			cout << "Four ";
-			break;
-		case (5) :
-			cout << "Five ";
-			break;
-		case (6) :
-			cout << "Six ";
-			break;
-		case (7) :
-			cout << "Seven ";
-			break;
-		case (8) :
-			cout << "Eight ";
-			break;
-		case(9) :
-			cout << "Nine ";
-			break;
-		default:
-			cout << "Error in tenths place\n.";
-			break;
-		}
-	}
-	if (tenths* 10 + hundreths > 0)
-		cout << "cents\n";
+
+	output = output + '\n';
+
+	return output; // returns english phrase for the desired user's dollar/cent amounts
+	
 }
