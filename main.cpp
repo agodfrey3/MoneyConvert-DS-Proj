@@ -1,9 +1,10 @@
 //Andrew Godfrey
 //Money Value to English Expression
-//Last Updated: 9/12/2016
-//Known Bug: If the cent input is one digit, it will read it as .01 instead of .10 ex. 1.5 would be read as 1.05. Worked around by telling user the proper format to enter an amount in.
+//Last Updated: 9/13/2016
+//Known Bug: None. Implemented Array for dollar/cent amount and fixed the issue where 150.1 == 150.01
 #include <iostream>
 #include <string>
+#include <limit>
 using namespace std;
 
 char getInput(int &dollars, int &cents);
@@ -19,15 +20,15 @@ void inputStatus(char exitCode);
 @pre-condition : getInput has been run and returned a character that signifies whether the dollar/cent values have been stored or not.
 @post-condition: The user is informed as to whether or not their input was valid.
 */
-void extractValues(int dollars, int cents, int &thousands, int &hundreds, int &tens, int &ones, int &tenths, int &hundreths);
+void extractValues(int dollars, int cents, int dollarArray[], int centArray[]);
 /*
-@param         : dollars and cents are the input from user signifying the dollar and cent amounts they desire to be translated into english. The remaining vars are empty and will be used to store digits correlating to places in the entered dollar amount. 
+@param         : dollars and cents are the input from user signifying the dollar and cent amounts they desire to be translated into english. The arrays are arrays that will store a digit correlating to a place value. ex: one thousand will be stored dollarArray[1XXX]  
 @pre-condition : The user has successfully entered a dollar amount, and variables are ready to hold each of the digits within the dollar amount entered. 
 @post-condition: Each digit from the user input dollar amount has been stored in a variable.
 */
-string getEnglishDollarAmount(int thousand, int hundred, int ten, int one, int tenth, int hundreth, int cents);
+string getEnglishDollarAmount(int dollarArray[], int centArray[], int cents, int dollars);
 /*
-@param         : Digit values for thousands, hundreds, tens, ones, tenths, and hundreths. Cents variable to check if the cents value is > 0
+@param         : Two arrays containing digits correlating to place values of the user input dollar/cent amounts. Dollar and cent hold the user's input for their dollar amount
 @pre-condition : The digits have been extracted from the user's dollar and cent input
 @post-condition: The proper english names have been concatenated into a string that displays the english phrase for the user's entered dollar amount
 @return        : A string correlating to the english phrase of the user's dollar/cent input
@@ -36,7 +37,7 @@ string getEnglishDollarAmount(int thousand, int hundred, int ten, int one, int t
 
 int main()
 {
-	int  dollars, cents, thousands, hundreds, tens, ones, tenths, hundreths;// Variables to store each digit in the dollar amount as well as the dollar and cent amounts themselves
+	int  dollars, cents, dollarArray[4], centArray[2];// Variables to store each digit in the dollar amount as well as the dollar and cent amounts themselves
 	char exitCode, choice;// Exit code correlates to the success or failure of an input operation; choice is y/n
 	
 	do// Main Loop. Runs the MoneyToEnglish functions until user wishes to stop
@@ -47,10 +48,10 @@ int main()
 			inputStatus(exitCode);              // Outputs whether the input was valid or not
 		} while (exitCode != 'g');
 
-		extractValues(dollars, cents, thousands, hundreds, tens, ones, tenths, hundreths);//extracts each digit from initial input
+		extractValues(dollars, cents, dollarArray, centArray);//extracts each digit from initial input
 
 		cout << "Amount is: "
-			<< getEnglishDollarAmount(thousands, hundreds, tens, ones, tenths, hundreths, cents);// Displays the user entered dollar amount in english
+			<< getEnglishDollarAmount(dollarArray, centArray, cents, dollars);// Displays the user entered dollar amount in english
 		cout << "Would you like to try another?\n"
 			<< "   Enter y/n\n";
 		cin >> choice;//user can choose to enter another number or not
@@ -66,7 +67,8 @@ char getInput(int &dollars, int &cents)
 	cout << "----------------Welcome to MakeMoney----------------\n"
 		<< "Please enter an amount between 9999.99 and 0.00\n"
 		<< "Enter an amount to convert: $";
-	int dol, cen;// temp vars to hold dollar and cent input for processing 
+	int dol, cenVal;// temp vars to hold dollar and cent input for processing 
+	string cen;
 	char ch;// variable to hold the separator, '.'
 	char code = 'g'; // Sets return val to good by default
 	while (true)
@@ -90,7 +92,16 @@ char getInput(int &dollars, int &cents)
 		}
 
 		cin >> cen;
-		if (cin.fail() || cen > 99)//gets input for cents and checks validity 
+		if (cin.fail())//gets input for cents and checks validity 
+		{
+			code = 'e';
+			cin.clear();
+			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+			break;
+		}
+
+		cenVal = ((cen[0] - '0') * 10) + (cen[1] - '0'); // Logic to convert the cent string to cent int 
+		if (cenVal < 0 || cenVal > 99)// checks to make sure the cent is within the proper range[ 0-99 ]
 		{
 			code = 'e';
 			cin.clear();
@@ -100,11 +111,14 @@ char getInput(int &dollars, int &cents)
 		break;
 	}
 
+		
+
 	if (code == 'g')// Sets the dollar/cent vars to the values of the temp vars since input was valid
 	{
 		dollars = dol;
-		cents = cen;
+		cents = cenVal;
 	}
+
 	return code;// returns 'g' for good or 'e' for error
 }
 
@@ -125,22 +139,22 @@ void inputStatus(char exitCode)
 	}
 }
 
-void extractValues(int dollars, int cents, int &thousands, int &hundreds, int &tens, int &ones, int &tenths, int &hundreths)
+void extractValues(int dollars, int cents, int dollarArray[], int centArray[])
 {
-	thousands = dollars / 1000;//returns the largest int that goes into dollars 1000 times + stores it into thousands
+	dollarArray[0] = dollars / 1000;//returns the largest int that goes into dollars 1000 times + stores it into thousands
 	dollars = dollars % 1000;//changes the value to the remainder after the thousands operation
-	hundreds = dollars / 100;
+	dollarArray[1] = dollars / 100;
 	dollars = dollars % 100;
-	tens = dollars / 10;
+	dollarArray[2] = dollars / 10;
 	dollars = dollars % 10;
-	ones = dollars;
+	dollarArray[3] = dollars;
 
-	tenths = cents / 10;
+	centArray[0] = cents / 10;
 	cents = cents % 10;
-	hundreths = cents;
+	centArray[1]= cents;
 }
 
-string getEnglishDollarAmount(int thousand, int hundred, int ten, int one, int tenth, int hundreth, int cents)
+string getEnglishDollarAmount(int dollarArray[], int centArray[], int cents, int dollars)
 {
 	// Lookup tables for dollar/cent values
 	string thousandsTable[10] = { "", "One Thousand ","Two Thousand ","Three Thousand ","Four Thousand ","Five Thousand ","Six Thousand ","Seven Thousand ","Eight Thousand ","Nine Thousand " };
@@ -148,26 +162,31 @@ string getEnglishDollarAmount(int thousand, int hundred, int ten, int one, int t
 	string tensTable[10] = { "", "", "Twenty ", "Thirty ", "Forty ", "Fifty ", "Sixty ", "Seventy ", "Eighty ", "Ninety " };
 	string onesWithOneTenTable[10] = { "Ten ","Eleven ","Twelve ","Thirteen ","Fourteen ","Fifteen ","Sixteen ","Seventeen ","Eighteen ","Nineteen " };
 	string onesTable[10] = { "", "One ","Two ","Three ","Four ","Five ","Six ","Seven ","Eight ","Nine " };
+	string output;
+	
+	if (dollars > 0)
+	{
+		output = thousandsTable[dollarArray[0]] + hundredsTable[dollarArray[1]]; // Adds thousands and hundreds phrases to the return string
+		if (dollarArray[2] == 1)
+			output = output + onesWithOneTenTable[dollarArray[3]] + "dollars"; // Adds phrase correlating numbers with a one in the tens place
+		else
+			output = output + tensTable[dollarArray[2]] + onesTable[dollarArray[3]] + "dollars"; // Adds phrase correlating to numbers with a digit other than one in the tens place
 
-	string output = thousandsTable[thousand] + hundredsTable[hundred]; // Adds thousands and hundreds phrases to the return string
-
-	if (ten == 1)
-		output = output + onesWithOneTenTable[one] + "dollars"; // Adds phrase correlating numbers with a one in the tens place
-	else
-		output = output + tensTable[ten] + onesTable[one] + "dollars"; // Adds phrase correlating to numbers with a digit other than one in the tens place
-
-
+	}
 	if (cents > 0) // checks to make sure that cents is > 0, else there is no need to state anything
 	{
 		output = output + " and ";
-		if (tenth == 1)
-			output = output + onesWithOneTenTable[hundreth];// adds phrase correlating to cents with a tenth digit of 1
+		if (centArray[0] == 1)
+			output = output + onesWithOneTenTable[centArray[1]];// adds phrase correlating to cents with a tenth digit of 1
 		else
-			output = output + tensTable[tenth] + onesTable[hundreth];// adds phrase correlating to cents with a tenth digit != 1
+			output = output + tensTable[centArray[0]] + onesTable[centArray[1]];// adds phrase correlating to cents with a tenth digit != 1
 		output = output + "cents.";
 	}
 
 	output = output + '\n';
+
+	if (dollars == 0 && cents == 0)
+		output = "Silly person, you have no money.\n";
 
 	return output; // returns english phrase for the desired user's dollar/cent amounts
 	
