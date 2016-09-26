@@ -1,246 +1,261 @@
 //Andrew Godfrey
 //Money Value to English Expression with Expenditure Implementation
-//Last Updated: 9/19/2016
-//Known Bug: None. Implemented Array for dollar/cent amount and fixed the issue where 150.1 == 150.01
-
-#include <iostream>
-#include <string>
-#include <limits>
-#include <list>
-#include <iterator>
+//Last Updated: 9/25/2016
+//Known Bug: None. 
+#include <iostream> // istream ostream
+#include <string> // string 
+#include <limits> // max
+#include <sstream> // stringstream
+#include <math.h> // ceil()
 
 using namespace std;
 
 #include "DollarAmount.h"
 #include "DollarAmount.cpp"
 
-
-
-char getInput(int &dollars, int &cents, string &exp);
+// Each function below commented in DollarAmount.h as they are all friend functons
+ostream& operator<<(ostream& output, DollarAmount& o);
+istream& operator>>(istream& input, DollarAmount& o);
+void swap(DollarAmount& d1, DollarAmount& d2);
+void sortList(DollarAmount * list, int len);
+void displayList(DollarAmount * list, int len);
+template<class DollarAmount>void bubbleSort(DollarAmount * list, size_t len);
 /*
-@param         : gets variables from main to store the user input values correlating to dollar and cent values, as well as the item,  which will later be converted to english words
-@pre-condition : empty variables for dollar/cent. User is ready to enter their desired dollar amount. 
-@post-condition: the input is either stored into variables (dollar and cent) and the function has returned a value to signify whether these values were stored or not. 
-@return        : char signifying whether the attempt was a success or failure. A return of 'g' means the dollar/cent values are stored and were valid, as well as the item that the expense was for. A return of 'e' means there was an error in the user's input.
+ *@param: DollarAmount pointer to array of DollarAmount objects and the size of the array
+ *@pre-conditoin: The array has been created and filled
+ *@post-condition: The array has been sorted from least to greatest
 */
-void inputStatus(char exitCode);
-/*
-@param         : Recieves code from 'getInput' that signifies whether the function was successful or not in obtaining values for dollar/cent
-@pre-condition : getInput has been run and returned a character that signifies whether the dollar/cent values have been stored or not.
-@post-condition: The user is informed as to whether or not their input was valid.
-*/
-void extractValues(int dollars, int cents, int dollarArray[], int centArray[]);
-/*
-@param         : dollars and cents are the input from user signifying the dollar and cent amounts they desire to be translated into english. The arrays are arrays that will store a digit correlating to a place value. ex: one thousand will be stored dollarArray[1XXX]  
-@pre-condition : The user has successfully entered a dollar amount, and variables are ready to hold each of the digits within the dollar amount entered. 
-@post-condition: Each digit from the user input dollar amount has been stored in a variable.
-*/
-string getEnglishDollarAmount(int dollarArray[], int centArray[], int cents, int dollars);
-/*
-@param         : Two arrays containing digits correlating to place values of the user input dollar/cent amounts. Dollar and cent hold the user's input for their dollar amount
-@pre-condition : The digits have been extracted from the user's dollar and cent input
-@post-condition: The proper english names have been concatenated into a string that displays the english phrase for the user's entered dollar amount
-@return        : A string correlating to the english phrase of the user's dollar/cent input
-*/
-void outputExpenditures(list<DollarAmount*>AmountList);
-/*
-@param         : A list of pointers to DollarAmount objects that the user has input
-@pre-condition : The list has been filled by the user 
-@post-condition: The contents of the list has been output to the console 
-*/
-
+ 
 int main()
 {
-	int  dollars, cents, dollarArray[4], centArray[2];// Variables to store each digit in the dollar amount as well as the dollar and cent amounts themselves
-	char exitCode, choice;// Exit code correlates to the success or failure of an input operation; choice is y/n
+	const int MAX_SIZE = 10; // max size of the input array
+	DollarAmount * DollarArray = new DollarAmount[MAX_SIZE]; // Dynamic array of DollarAmounts to hold each input
 	string expense;
+	bool isDone = false;
+	int arrayLen = 0;
+	int middleIndex; 
 	
-	list<DollarAmount*> AmountList;//creates a list of object pointers that point to dollar amounts that the user has entered ( initialized empty ) 	
-	DollarAmount total; // An empty object to store the total expenditure
-	
-	do// Main Loop. Runs the MoneyToEnglish functions until user wishes to stop
-	{	
-		do//gets input until the input satisfies conditions
-		{
-			exitCode = getInput(dollars, cents, expense);//gets input and returns a code connected to an error or successful run
-			inputStatus(exitCode);              // Outputs whether the input was valid or not
-		} while (exitCode != 'g');
-
-		if ( dollars != -1 )
-		{
-			DollarAmount *newAmount = new DollarAmount(dollars, cents, expense); // Creates a dynmic object of type DollarAmount with dollar and cent arguments
-			AmountList.push_back(newAmount);// Pushes the new object to the list of Dollar Amounts 
-			total = total + *newAmount;
-		}
-	} while ( dollars != -1 );
-	
-	outputExpenditures(AmountList);// Outputs the expenditures entered 
-	
-	extractValues(total.getDollar(), total.getCents(), dollarArray, centArray);// Extracts digits from the DollarAmount total
-	string totalValue = getEnglishDollarAmount( dollarArray, centArray, total.getDollar(), total.getCents() ) ;// Creates an english phrase for the total amount
-
-	if (!total.fail())// Checks to make sure the end value of total is valid.
+	do//gets input until the input satisfies conditions
 	{
-		cout << "Total Expense: $" << total.getDollar() << '.' << total.getCents() <<  " (" << totalValue << ')' << endl// Final Output	
-		     << "Thank you for using MoneyConvert\n";
-	}
-	else // Informs the user that their input was too large
-		cout << "Error: Your edpenditure exceeds $9999.99, program terminating.\n";
-
-	return 0;//clean exit
-}
-
-char getInput(int &dollars, int &cents, string &expense)
-{
-	cout << "Enter Expenditure(e.g. 35.45 Mirror) OR enter -1 to quit. [Note: Your total expenses cannot exceed $9999.99] : $";
-	int dol, cenVal;// temp vars to hold dollar and cent input for processing 
-	string cen, exp;
-	char ch;// variable to hold the separator, '.'
-	char code = 'g'; // Sets return val to good by default
-	while (true)
-	{
-		cin >> dol;//get input for dollars
-		if (cin.fail() || dol > 9999)// Checks to make sure that the input is valid 
-		{
-			code = 'e';// sets an error flag
-			cin.clear();// clears the cin failure flag
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');// clears the buffer to next line
-			break;// ends loop
-		}
-		if ( dol == -1 )
-		{
-			code = 'q';
-			break;
-		}
-
-		cin >> ch;
-		if (cin.fail() || ch != '.')//gets input for separater and checks validity
-		{
-			code = 'e';
-			cin.clear();
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			break;
-		}
-
-		cin >> cen;
-		if (cin.fail())//gets input for cents and checks validity 
-		{
-			code = 'e';
-			cin.clear();
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			break;
-		}
-
-		cenVal = ((cen[0] - '0') * 10) + (cen[1] - '0'); // Logic to convert the cent string to cent int 
-		if (cenVal < 0 || cenVal > 99)// checks to make sure the cent is within the proper range[ 0-99 ]
-		{
-			code = 'e';
-			cin.clear();
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			break;
-		}
-		
-		getline(cin, exp);
-		if ( cin.fail() )
-		{
-			code = 'e';
-			cin.clear();
-			cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-			break;
-		}
-		break;
-	}
-
-		
-
-	if (code == 'g')// Sets the dollar/cent vars to the values of the temp vars since input was valid
-	{
-		dollars = dol;
-		cents = cenVal;
-		expense = exp;
-	}
-	else if ( code == 'q' )
-	{
-		dollars = dol;
-		cents = 0;
-		expense = "None";
-		code = 'g';
-	}
-
-	return code;// returns 'g' for good or 'e' for error, or q for done
-}
-
-void inputStatus(char exitCode)
-{
-	switch (exitCode)
-	{
-	case ('e')://code for error
-		cout << "Your input was invalid, please try again.\n\n";
-		break;
-	case ('g')://code for good input
-		cout << "Thank you. Processing...\n";
-		break;
-	default://code if the getInput function malfunctioned
-		cout << "Bug in code. Check over logic\n";
-		break;
-	}
-}
-
-void extractValues(int dollars, int cents, int dollarArray[], int centArray[])
-{
-	dollarArray[0] = dollars / 1000;//returns the largest int that goes into dollars 1000 times + stores it into thousands
-	dollars = dollars % 1000;//changes the value to the remainder after the thousands operation
-	dollarArray[1] = dollars / 100;
-	dollars = dollars % 100;
-	dollarArray[2] = dollars / 10;
-	dollars = dollars % 10;
-	dollarArray[3] = dollars;
-
-	centArray[0] = cents / 10;
-	cents = cents % 10;
-	centArray[1]= cents;
-}
-
-string getEnglishDollarAmount(int dollarArray[], int centArray[], int cents, int dollars)
-{
-	// Lookup tables for dollar/cent values
-	string thousandsTable[10] = { "", "One Thousand ","Two Thousand ","Three Thousand ","Four Thousand ","Five Thousand ","Six Thousand ","Seven Thousand ","Eight Thousand ","Nine Thousand " };
-	string hundredsTable[10] = { "", "One Hundred ", "Two Hundred ", "Three Hundred ", "Four Hundred ", "Five Hundred ", "Six Hundred ", "Seven Hundred ", "Eight Hundred ", "Nine Hundred " };
-	string tensTable[10] = { "", "", "Twenty ", "Thirty ", "Forty ", "Fifty ", "Sixty ", "Seventy ", "Eighty ", "Ninety " };
-	string onesWithOneTenTable[10] = { "Ten ","Eleven ","Twelve ","Thirteen ","Fourteen ","Fifteen ","Sixteen ","Seventeen ","Eighteen ","Nineteen " };
-	string onesTable[10] = { "", "One ","Two ","Three ","Four ","Five ","Six ","Seven ","Eight ","Nine " };
-	string output;
-	
-	if (dollars > 0)
-	{
-		output = thousandsTable[dollarArray[0]] + hundredsTable[dollarArray[1]]; // Adds thousands and hundreds phrases to the return string
-		if (dollarArray[2] == 1)
-			output = output + onesWithOneTenTable[dollarArray[3]] + "dollars"; // Adds phrase correlating numbers with a one in the tens place
+		cin >> DollarArray[arrayLen]; // Inputs the data to DollarAmount Object
+		if ( DollarArray[arrayLen].getDollar() == -1 ) // Checks to see if user wishes to exit
+			isDone = true;
 		else
-			output = output + tensTable[dollarArray[2]] + onesTable[dollarArray[3]] + "dollars"; // Adds phrase correlating to numbers with a digit other than one in the tens place
+			arrayLen++; // Increments array size
+	} while (isDone == false && arrayLen < 10 ); // Ends when list is full or use wishes to exit '-1'
 
-	}
-	if (cents > 0) // checks to make sure that cents is > 0, else there is no need to state anything
-	{
-		output = output + " and ";
-		if (centArray[0] == 1)
-			output = output + onesWithOneTenTable[centArray[1]];// adds phrase correlating to cents with a tenth digit of 1
-		else
-			output = output + tensTable[centArray[0]] + onesTable[centArray[1]];// adds phrase correlating to cents with a tenth digit != 1
-		output = output + "cents";
-	}
-
-	if (dollars == 0 && cents == 0)
-		output = "Silly person, you have no money";
-
-	return output; // returns english phrase for the desired user's dollar/cent amounts
+	DollarAmount total = getTotal(DollarArray, arrayLen);// Creates an object to hold the total amount in
+	total.extractValues();
+	total.setEnglishDollarAmount();
 	
+	bubbleSort(DollarArray, arrayLen); // Sorts list from least to greatest
+	displayList(DollarArray, arrayLen); // Displays the lsit of Dollar Amounts
+
+	
+	if ( !total.fail() )
+		cout << endl << "Total: $" << total << "( " << total.getPhrase() << " )" << endl; // Outputs the total amount 
+	else
+		cout << endl << "Sorry, your total input was too large! ( > 999.99 ) \n";
+	
+	middleIndex = ceil(arrayLen / 2);// Finds middle index. If list is Even, it will round the index up
+	cout << "Median: $" << DollarArray[middleIndex] << endl;
+
+	delete [] DollarArray; //Releases the array's memory  
 }
-void outputExpenditures(list<DollarAmount*>AmountList)
+
+template<class DollarAmount>void bubbleSort(DollarAmount * list, size_t len)
 {
-        list<DollarAmount*>::iterator it;// Creates an iterator object
-	for ( it = AmountList.begin(); it != AmountList.end(); it++) // Runs through all objects in the list
-	{
-	       	cout << "Expenditure: $" << (*it)->getDollar() << '.' << (*it)->getCents() << " for: " << (*it)->getExpense() << endl;// Outputs the price
+	if ( len > 1 ) // Doesnt need to sort if length is 1
+        {
+                for ( int i = 0; i < len - 1; i++)
+                {
+                        for ( int j = i + 1; j < len; j++)
+                        {
+                                if ( list[i] > list[j] )
+                                {
+                                        swap(list[i], list[j]); // Swaps values
+                                }
+                        }
+                }
         }
 }
+
+void displayList(DollarAmount * list, int len)
+{
+	for (int i = 0; i < len; i++)
+	{
+		if ( i == 9 )
+			cout << (i+1) << ") " << list[i] << endl; // e.g  "10) 143.54 Apples " 
+		else
+			cout << ' ' << (i+1) << ") " << list[i] << endl;//"01) 143.54 Apples "
+	}
+}
+/*
+void sortList(DollarAmount * list, int len)
+{
+	if ( len > 1 ) // Doesnt need to sort if length is 1 
+	{
+		for ( int i = 0; i < len - 1; i++)
+		{
+			for ( int j = i + 1; j < len; j++)
+			{
+				if ( list[i] > list[j] )
+				{
+					swap(list[i], list[j]); // Swaps values 
+				}
+			}
+		}
+	}
+}
+*/
+DollarAmount getTotal(DollarAmount * list, int len)
+{
+	DollarAmount total(0,0);
+	for (int i = 0; i < len; i++)
+	{
+		if ( list[i].dollar != -1 && list[i].dollar != -2 )
+		{
+			total = total + list[i]; 
+		}
+	}
+	return total;
+}
+
+void swap(DollarAmount& d1, DollarAmount& d2)
+{
+	int tempCen, tempDol;
+	int *tempCenArray = new int[2];
+	int *tempDolArray = new int[4];
+	string tempExpense, tempEngPhrase, tempCenStr;
+	
+	tempCen = d1.cents; // Stores d1 data so data is not lost
+	tempDol = d1.dollar;
+	tempExpense = d1.expense;
+	tempEngPhrase = d1.englishPhrase;
+	tempCenStr = d1.centsStr;
+	*tempCenArray = *d1.centArray;
+	*tempDolArray = *d1.dollarArray;
+	
+	d1.cents = d2.cents;// sets d1 to d2 
+	d1.dollar = d2.dollar;
+	d1.expense = d2.expense;
+	d1.englishPhrase = d2.englishPhrase;
+	d1.centsStr = d2.centsStr;
+	d1.centArray[0] = d2.centArray[0];
+	d1.centArray[1] = d2.centArray[1];
+	d1.dollarArray[0] = d2.dollarArray[0];
+	d1.dollarArray[1] = d2.dollarArray[1];
+	d1.dollarArray[2] = d2.dollarArray[2];	
+	d1.dollarArray[3] = d2.dollarArray[3];
+
+	d2.cents = tempCen; // sets d2 to d1 ( temp ) 
+	d2.dollar = tempDol;
+	d2.expense = tempExpense;
+	d2.englishPhrase = tempEngPhrase;
+	d2.centsStr = tempCenStr;
+	d2.centArray[0] = tempCenArray[0];
+	d2.centArray[1] = tempCenArray[1];
+	d2.dollarArray[0] = tempDolArray[0];
+	d2.dollarArray[1] = tempDolArray[1];
+	d2.dollarArray[2] = tempDolArray[2];
+	d2.dollarArray[3] = tempDolArray[3];
+	
+	delete [] tempCenArray; // releases memory 
+	delete [] tempDolArray;
+	
+}
+ostream& operator<<(ostream& output, DollarAmount &o)
+{
+	if (o.dollar != -2 && o.cents != -2 && o.dollar != -1) // Makes sure the object has valid data before outputting
+	{
+		output << o.dollar << '.' << o.centsStr << ' '; 
+		if (o.expense != "NONE")
+			output << o.expense;
+	}
+	else
+		output << "Empty";
+
+	return output;
+}
+istream& operator>>(istream &input, DollarAmount &o)
+{
+        char code = 'x';
+        do
+	{
+                cout << "Enter Expenditure(e.g. 35.45 Mirror) OR enter -1 to quit. [Note: Your total expenses cannot exceed $9999.99 and you may only enter 10 expenses] : $";
+                int dol, cenVal;// temp vars to hold dollar and cent input for processing
+                string cen, exp;
+                code = 'g';
+                char ch;// variable to hold the separator, '.'
+                while (true)
+                {
+                        input >> o.dollar;//get input for dollars
+                        if (input.fail() || o.dollar > 9999)// Checks to make sure that the input is valid
+                        {
+                                code = 'e';// sets an error flag
+                                input.clear();// clears the cin failure flag
+                                input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');// clears the buffer to nex    t line
+                                break;// ends loop
+                        }
+                        if ( o.dollar == -1 )
+                        {
+                                code = 'q';
+                                break;
+                        }
+                        input >> ch;
+                        if (input.fail() || ch != '.')//gets input for separater and checks validity
+                        {
+                                code = 'e';
+                                input.clear();
+                                input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                                break;
+                        }
+			input >> o.centsStr;		
+                        if (input.fail() || o.centsStr.size() > 2)//gets input for cents and checksvalidity
+                        {
+                                code = 'e';
+                                input.clear();
+                                input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                                break;
+                        }
+                        cenVal = ((o.centsStr[0] - '0') * 10) + (o.centsStr[1] - '0'); // Logic to convert the cent string to cent int
+                        if (cenVal < 0 || cenVal > 99)// checks to make sure the cent is within the proper range[ 0-99 ]
+                        {
+                            code = 'e';
+                                input.clear();
+                                input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                                break;
+                        }
+			o.cents = cenVal;
+                        getline(cin, o.expense);
+                        if ( input.fail() )
+                        {
+                                code = 'e';
+                                input.clear();
+                                input.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                                break;
+                        }
+                	break;
+                }
+                if (code == 'g')// Sets the dollar/cent vars to the values of the temp vars since input was valid
+                {
+                        o.extractValues();
+                        o.setEnglishDollarAmount();
+                        return input;
+		}
+                else if ( code == 'e' )
+		{
+                        cout << "Invalid Input, please retry\n";
+		}
+                else if ( code == 'q' )
+                {
+                        cout << "Processing Entered Data...\n\n";
+                        code = 'g';
+                }
+                else
+                        cout << "Error in code; continuing as if bad input    \n";
+	}while (code != 'g');
+	
+}
+
+
