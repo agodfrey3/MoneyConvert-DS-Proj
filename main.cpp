@@ -17,7 +17,6 @@ using namespace std;
 ostream& operator<<(ostream& output, DollarAmount& o);
 istream& operator>>(istream& input, DollarAmount& o);
 void swap(DollarAmount& d1, DollarAmount& d2);
-void sortList(DollarAmount * list, int len);
 void displayList(DollarAmount * list, int len);
 template<class DollarAmount>void bubbleSort(DollarAmount * list, size_t len);
 /*
@@ -90,24 +89,7 @@ void displayList(DollarAmount * list, int len)
 			cout << ' ' << (i+1) << ") " << list[i] << endl;//"01) 143.54 Apples "
 	}
 }
-/*
-void sortList(DollarAmount * list, int len)
-{
-	if ( len > 1 ) // Doesnt need to sort if length is 1 
-	{
-		for ( int i = 0; i < len - 1; i++)
-		{
-			for ( int j = i + 1; j < len; j++)
-			{
-				if ( list[i] > list[j] )
-				{
-					swap(list[i], list[j]); // Swaps values 
-				}
-			}
-		}
-	}
-}
-*/
+
 DollarAmount getTotal(DollarAmount * list, int len)
 {
 	DollarAmount total(0,0);
